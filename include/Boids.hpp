@@ -1,11 +1,11 @@
 #ifndef BOID_HPP_
 #define BOID_HPP_
 
-#include "glm/glm.hpp"
+#include "glm/ext.hpp"
 
 #define WALLOFFSET -1.0
 
-#define BOIDS_COUNT 100
+#define BOIDS_COUNT 10
 
 class Boid {
     public:

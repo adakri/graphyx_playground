@@ -25,6 +25,7 @@ set(PROJECT_ROOT_PATH ${PROJECT_SOURCE_DIR})
 # All sources
 file(GLOB SRCS 
     "src/*.cpp"
+    "src/Boids/*.cpp"
 )
 
 # Add imgui files
@@ -56,5 +57,5 @@ message((${LIBS}))
 add_executable(graphyx_playground ${SRCS})
 target_link_libraries(graphyx_playground ${LIBS})
 
-include_directories(${CMAKE_SOURCE_DIR}/external)
+include_directories(${CMAKE_SOURCE_DIR}/external ${CMAKE_SOURCE_DIR}/include())
 

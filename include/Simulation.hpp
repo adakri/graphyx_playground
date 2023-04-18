@@ -2,12 +2,17 @@
 #define Simulation_HPP_
 
 #include "Boids.hpp"
-#include "glm/glm.hpp"
+#include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
 #include <time.h>
 #include <map>
 #include <fstream>
+#include <ctime>
+#include <iostream>
+
+
+#define SHADER_PATH "shaders/"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -52,7 +57,7 @@ class Simulation {
         const char *getFileContent(const std::string &path) const;
         void compileShader(unsigned int *shaderId, std::string filename, unsigned int type);
         void checkShaderProgramCompileError(unsigned int shaderProgramId);
-        void openGlInit();
+        int openGlInit();
         void openGlDraw();
 
         bool _wireframe;
