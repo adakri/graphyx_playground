@@ -5,7 +5,7 @@
 
 #define WALLOFFSET -1.0
 
-#define BOIDS_COUNT 10
+#define BOIDS_COUNT 100
 
 class Boid {
     public:

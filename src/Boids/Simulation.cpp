@@ -5,6 +5,7 @@ Simulation::Simulation()
     // Initialize window
     int state = openGlInit();
 
+
     // Frame rate and misc
     srand(static_cast<unsigned int>(time(NULL)));
     _framerate = 60;
@@ -61,6 +62,7 @@ const char *Simulation::getFileContent(const std::string& path) const
 void Simulation::compileShader(unsigned int *shaderId, std::string filename, unsigned int type)
 {
     const char *shaderSource = getFileContent(std::string(SHADER_PATH) + filename);
+    unsigned int v = glCreateShader(type);
     *shaderId = glCreateShader(type);
     glShaderSource(*shaderId, 1, &shaderSource, NULL);
     glCompileShader(*shaderId);
@@ -94,10 +96,16 @@ void Simulation::checkShaderProgramCompileError(unsigned int shaderProgramId)
 int Simulation::openGlInit()
 {
     // Start window
-    glfwInit();
+    std::cout<<"starting the initialization"<<std::endl;
+    if( !glfwInit() ) {
+        std::cout<<"Failed to initialize GLFW"<<std::endl;
+        return -1;
+    }
+    
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    
     // glfw window creation
     // --------------------
     _window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
@@ -110,20 +118,16 @@ int Simulation::openGlInit()
     glfwMakeContextCurrent(_window);
     glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
 
-    // Compile shaders
-    compileShader(&_vertexShader, "boid.vs", GL_VERTEX_SHADER);
-    *GLint success;
-    glGetShaderiv(_vertexShader, GL_COMPILE_STATUS, &success);
-
-    if (success != GL_TRUE) {
-        GLint log_size;
-        glGetShaderiv(_vertexShader, GL_INFO_LOG_LENGTH, &log_size);
-        char* shader_log = static_cast<char*>(malloc(log_size));
-        glGetShaderInfoLog(_vertexShader, log_size, NULL, shader_log);
-        std::cerr << "Fragment:" << shader_log << std::endl;
+    // glad: load all OpenGL function pointers
+    // ---------------------------------------
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    compileShader(&_fragmentShader, "boid.fs", GL_FRAGMENT_SHADER);
+
+    // Compile shaders
+    compileShader(&_vertexShader, "boid.vs", GL_VERTEX_SHADER);
     _vertexFragProgram = glCreateProgram();
     glAttachShader(_vertexFragProgram, _vertexShader);
     glAttachShader(_vertexFragProgram, _fragmentShader);
@@ -215,13 +219,13 @@ void Simulation::run()
         glfwPollEvents();
     }
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
-    glfwTerminate();
-
     glDeleteBuffers(1, &_VBO);
     glDeleteBuffers(1, &_instanceVBO);
     glDeleteBuffers(1, &_SSBO);
+
+    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // ------------------------------------------------------------------
+    glfwTerminate();
 
 }
 

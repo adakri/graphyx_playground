@@ -26,6 +26,7 @@ set(PROJECT_ROOT_PATH ${PROJECT_SOURCE_DIR})
 file(GLOB SRCS 
     "src/*.cpp"
     "src/Boids/*.cpp"
+    "src/utils/*.cpp"
 )
 
 # Add imgui files
