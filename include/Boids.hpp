@@ -1,11 +1,13 @@
 #ifndef BOID_HPP_
 #define BOID_HPP_
 
+#include <iostream>
 #include "glm/ext.hpp"
 
 #define WALLOFFSET -1.0
 
-#define BOIDS_COUNT 100
+#define BOIDS_COUNT 20000
+#define BUCKETS_COUNT 400 // Change in both GLSL compute shader too !
 
 class Boid {
     public:
@@ -21,6 +23,7 @@ class Boid {
         // GPU buffers
         static void prepareDrawingBuffers(unsigned int VAO, unsigned int VBO, unsigned int instanceVBO, float *worldPosScaleAngleDeg);
         static void clearDrawingBuffers(const unsigned int VAO);
+        static void updateHashtable(float *hashtable, unsigned int tableSize, float *worldPosScaleAngleDeg, unsigned int worldPosScaleAngleDegOffset, float *bufferSelector);
 
         glm::vec2 center;
         glm::vec2 scale;

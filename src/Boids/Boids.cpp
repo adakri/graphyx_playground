@@ -79,12 +79,33 @@ Boid::Boid(const glm::vec2 position, const float screenWidth, const int size)
     angleDeg = rand() % 360;
 
     _screenWidth = screenWidth;
-    _gridWidth = static_cast<int>(glm::sqrt(BOIDS_COUNT));
+    _gridWidth = static_cast<int>(glm::sqrt(BUCKETS_COUNT));
     _cellWidth = static_cast<int>(_screenWidth / _gridWidth);
 }
 
 Boid::~Boid()
 {
+}
+
+
+void Boid::updateHashtable(float *hashtable, unsigned int tableSize, float *worldPosScaleAngleDeg, unsigned int worldPosScaleAngleDegOffset, float *bufferSelector)
+{
+    std::memset(hashtable, 0, tableSize * sizeof(float));
+    for (unsigned int i = 0; i < BOIDS_COUNT * worldPosScaleAngleDegOffset; i += worldPosScaleAngleDegOffset) {
+        int hashKey = static_cast<int>(std::floor(worldPosScaleAngleDeg[i] / _cellWidth) + std::floor(worldPosScaleAngleDeg[i + 1] / _cellWidth) * _gridWidth);
+        if (hashKey < 0 || hashKey >= BUCKETS_COUNT) {
+            hashtable[static_cast<int>(worldPosScaleAngleDeg[i + worldPosScaleAngleDegOffset - 1]) * 2]++;
+            continue;
+        }
+        worldPosScaleAngleDeg[i + worldPosScaleAngleDegOffset - 1] = static_cast<float>(hashKey);
+        hashtable[hashKey * 2]++;
+    }
+    for (unsigned int i = 0, totalBoids = 0; i < tableSize; i += 2) {
+        hashtable[i + 1] = static_cast<float>(totalBoids);
+        totalBoids += static_cast<unsigned int>(hashtable[i]);
+    }
+    if (*bufferSelector == 1.0f) *bufferSelector = 2.0f;
+    else *bufferSelector = 1.0f;
 }
 
 /**

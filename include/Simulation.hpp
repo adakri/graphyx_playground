@@ -6,10 +6,15 @@
 #include "GLFW/glfw3.h"
 
 #include <time.h>
+#include <chrono>
 #include <map>
 #include <fstream>
 #include <ctime>
 #include <iostream>
+#include <filesystem>
+
+//debug
+#define printarr(fmt, dat, len)	for (int i = 0; i < len; i++) printf(fmt, dat[i])
 
 
 #define SHADER_PATH "shaders/"
@@ -54,7 +59,7 @@ class Simulation {
         unsigned int _bufferSelectorIdx;
 
         // For OpenGL
-        const char *getFileContent(const std::string &path) const;
+        const char *getFileContent(const std::string &path, int& shaderSource_string_length) const;
         void compileShader(unsigned int *shaderId, std::string filename, unsigned int type);
         void checkShaderProgramCompileError(unsigned int shaderProgramId);
         int openGlInit();
