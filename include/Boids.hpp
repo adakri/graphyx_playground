@@ -6,7 +6,7 @@
 
 #define WALLOFFSET -1.0
 
-#define BOIDS_COUNT 20000
+#define BOIDS_COUNT 9000
 #define BUCKETS_COUNT 400 // Change in both GLSL compute shader too !
 
 class Boid {

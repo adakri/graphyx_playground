@@ -138,13 +138,25 @@ Boid::~Boid()
 {
 }
 
-
+/**
+ * @brief Create hashtable
+ * 
+ * @param hashtable 
+ * @param tableSize 
+ * @param worldPosScaleAngleDeg 
+ * @param worldPosScaleAngleDegOffset 
+ * @param bufferSelector 
+ */
 void Boid::updateHashtable(float *hashtable, unsigned int tableSize, float *worldPosScaleAngleDeg, unsigned int worldPosScaleAngleDegOffset, float *bufferSelector)
 {
+    // Set memory
     std::memset(hashtable, 0, tableSize * sizeof(float));
+    // update hashing table using new shared buffer
     for (unsigned int i = 0; i < BOIDS_COUNT * worldPosScaleAngleDegOffset; i += worldPosScaleAngleDegOffset) {
+        // Create hash key from position and grid location
         int hashKey = static_cast<int>(std::floor(worldPosScaleAngleDeg[i] / _cellWidth) + std::floor(worldPosScaleAngleDeg[i + 1] / _cellWidth) * _gridWidth);
         if (hashKey < 0 || hashKey >= BUCKETS_COUNT) {
+            // Move the hashkey to the neighbouring grid pixel
             hashtable[static_cast<int>(worldPosScaleAngleDeg[i + worldPosScaleAngleDegOffset - 1]) * 2]++;
             continue;
         }
@@ -176,6 +188,7 @@ void Boid::setVerticeModel(float x, float y, unsigned int i)
     _vertices[i + 1] = normalized.y;
 }
 
+// Getters
 const glm::vec2 &Boid::getWorldPosition() const
 {
     return center;

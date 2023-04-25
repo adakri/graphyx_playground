@@ -26,7 +26,7 @@ Simulation::Simulation()
     for (int i = 0; i < BOIDS_COUNT; i++) {
         int x = static_cast<int>(WALLOFFSET + rand() % static_cast<int>(SCR_WIDTH - WALLOFFSET * 2));
         int y = static_cast<int>(WALLOFFSET + rand() % static_cast<int>(SCR_HEIGHT - WALLOFFSET * 2));
-        _boids[i] = Boid(glm::vec2{x, y}, static_cast<float>(SCR_WIDTH), 5);
+        _boids[i] = Boid(glm::vec2{x, y}, static_cast<float>(SCR_WIDTH), 4);
     }
     // Spatial hashing for boids neighborhood acceleration
     // The idea is to create a 2D voxel grid and a hash table for neighbour search
@@ -68,6 +68,13 @@ Simulation::~Simulation()
     delete[] _boids;
 }
 
+/**
+ * @brief Get string from shader path
+ * 
+ * @param path 
+ * @param shaderSource_string_length 
+ * @return const char* 
+ */
 const char *Simulation::getFileContent(const std::string& path, int& shaderSource_string_length) const
 {
     // Check if the file exists
@@ -85,6 +92,13 @@ const char *Simulation::getFileContent(const std::string& path, int& shaderSourc
     return cstr;
 }
 
+/**
+ * @brief Compile shaders and return error log if incorrect
+ * 
+ * @param shaderId 
+ * @param filename 
+ * @param type 
+ */
 void Simulation::compileShader(unsigned int *shaderId, std::string filename, unsigned int type)
 {
     int shaderSource_string_length;
@@ -107,6 +121,11 @@ void Simulation::compileShader(unsigned int *shaderId, std::string filename, uns
     delete[] shaderSource;
 }
 
+/**
+ * @brief Check for glsl compile errors
+ * 
+ * @param shaderProgramId 
+ */
 void Simulation::checkShaderProgramCompileError(unsigned int shaderProgramId)
 {
     int  success;
@@ -120,6 +139,11 @@ void Simulation::checkShaderProgramCompileError(unsigned int shaderProgramId)
     }
 }
 
+/**
+ * @brief Initialize glfw and compile shaders.
+ * 
+ * @return int 
+ */
 int Simulation::openGlInit()
 {
     // Start window
@@ -160,12 +184,12 @@ int Simulation::openGlInit()
     // Compile shaders
     std::cout<<"Compiling shaders..."<<std::endl;
     std::cout<<"Vertex shader..."<<std::endl;
-    compileShader(&_vertexShader, "boid.vs", GL_VERTEX_SHADER);
+    compileShader(&_vertexShader, "boid_vs.glsl", GL_VERTEX_SHADER);
     std::cout<<"Frag shader..."<<std::endl;
-    compileShader(&_fragmentShader, "boid.fs", GL_FRAGMENT_SHADER);
+    compileShader(&_fragmentShader, "boid_fs.glsl", GL_FRAGMENT_SHADER);
     _vertexFragProgram = glCreateProgram();
     std::cout<<"Geom shader..."<<std::endl;
-    compileShader(&_geometryShader, "boid.gs", GL_GEOMETRY_SHADER);
+    compileShader(&_geometryShader, "boid_gs.glsl", GL_GEOMETRY_SHADER);
     _vertexFragProgram = glCreateProgram();
     // Frag and vert shaders are attached to the same program
     glAttachShader(_vertexFragProgram, _vertexShader);
@@ -229,8 +253,11 @@ void Simulation::display()
                 delete[] _sharedBuffer;
                 firstIt++;
             }
+            // Launch a block size of Grid/32 (32 threads per bucket)
             glDispatchCompute(static_cast<GLuint>(glm::ceil(BUCKETS_COUNT / 32.0f)), 1, 1);
+            // Synchronisation barrier
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+            // Offload shader storage
             _sharedBuffer = (float *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
             glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
@@ -250,7 +277,7 @@ void Simulation::display()
     glUseProgram(_vertexFragProgram);
         glUniformMatrix4fv(glGetUniformLocation(_vertexFragProgram, "projection"), 1, GL_FALSE, glm::value_ptr(_projection));
         Boid::prepareDrawingBuffers(_VAO, _VBO, _instanceVBO, _sharedBuffer[_bufferSelectorIdx] == 2.0f ? &_sharedBuffer[_worldPosScaleAngleDegIdx2] : &_sharedBuffer[_worldPosScaleAngleDegIdx1]);
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 3, BOIDS_COUNT);
+        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 6, BOIDS_COUNT);
         Boid::clearDrawingBuffers(_VAO);
     glUseProgram(0);
 

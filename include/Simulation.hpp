@@ -63,7 +63,6 @@ class Simulation {
         void compileShader(unsigned int *shaderId, std::string filename, unsigned int type);
         void checkShaderProgramCompileError(unsigned int shaderProgramId);
         int openGlInit();
-        void openGlDraw();
 
         bool _wireframe;
         unsigned int _VAO, _VBO, _instanceVBO, _SSBO;

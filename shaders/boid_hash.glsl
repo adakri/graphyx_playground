@@ -1,14 +1,18 @@
 #version 460 core
 
+// Hashing grid
 #define BUCKETS_COUNT 400
 
+// 32 threads/lanes per bloc
 layout (local_size_x = 32) in;
 
+// Hash 
 struct s_hash {
     float size;
     float startIdx;
 };
 
+// Boid as explaned in shared buffer
 struct s_boid {
     float centerX;
     float centerY;
@@ -18,6 +22,8 @@ struct s_boid {
     float hashKey;
 };
 
+// Shared buufer was binded to 0
+// std430: https://stackoverflow.com/questions/73189196/diffrence-between-std140-and-std430-layout
 layout(std430, binding = 0) buffer sharedBufferBoids {
     s_hash htable[BUCKETS_COUNT];
     float boidsCount;

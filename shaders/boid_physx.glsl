@@ -1,10 +1,11 @@
-#version 460 core
+#version 430 core
 
 #define BUCKETS_COUNT 400
 #define GRID_WIDTH sqrt(BUCKETS_COUNT)
 
 #define PI 3.1415926538
 
+// Sim parameters
 #define COHESION 40.0f
 #define ALIGNMENT 25.0f
 #define SEPARATION 3.0f
@@ -13,6 +14,7 @@
 #define SPEED 2
 #define RAYCAST_RANGE 50
 
+// Same as previous compute shader
 layout (local_size_x = 32) in;
 
 struct s_hash {
@@ -38,6 +40,7 @@ layout(std430, binding = 0) buffer sharedBufferBoids {
     s_boid boids[];
 };
 
+// Is boid touching the border, bring back to the other side
 void checkBorder(const int thisBoid)
 {
     if (boids[thisBoid].centerX > windowWidth)
@@ -51,21 +54,19 @@ void checkBorder(const int thisBoid)
         boids[thisBoid].centerY = windowHeight;
 }
 
+// Norm
 float magnitudeVec2(const vec2 a, const vec2 b)
 {
     return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
 }
 
+// Get vec2 boid direction
 vec2 getBoidDirection(const float angleDeg, const float len) {
     float angleRad = angleDeg * PI / 180;
     return vec2(len * cos(angleRad), len * sin(angleRad));
 }
 
-// TODO
-// void checkAllNeighbours()
-// {
-// }
-
+// Boid intersection
 bool intersects(vec2 A, vec2 B, vec2 C, vec2 D) {
     float det, gamma, lambda;
     det = (B.x - A.x) * (D.y - C.y) - (D.x - C.x) * (B.y - A.y);
@@ -78,6 +79,7 @@ bool intersects(vec2 A, vec2 B, vec2 C, vec2 D) {
     }
 };
 
+// Normalization op
 vec2 normalizeVec2(const vec2 a, const vec2 b)
 {
     float magnitude = magnitudeVec2(a, b);
@@ -89,6 +91,7 @@ vec2 normalizeVec2(const vec2 a, const vec2 b)
     return normalize;
 }
 
+// :)
 vec2 rotatePointAroundCenter(vec2 point, const vec2 center, const float angleDeg)
 {
     float angleRad = angleDeg * PI / 180;
@@ -108,6 +111,7 @@ vec2 rotatePointAroundCenter(vec2 point, const vec2 center, const float angleDeg
     return point;
 }
 
+// :)
 int mappedRadToDeg(float rad)
 {
     float deg = rad * 180.0 / PI;
@@ -119,6 +123,7 @@ int mappedDegrees(int deg)
     return int(deg + 360) % 360;
 }
 
+// Add rotation to boid
 void processRotation(int resultAngle, int thisBoidAngle, int thisBoid)
 {
     int degreesDif = resultAngle - thisBoidAngle;
@@ -133,8 +138,6 @@ void processRotation(int resultAngle, int thisBoidAngle, int thisBoid)
 
 bool raycast(vec2 directionVec, int thisBoid)
 {
-    // if (boids[thisBoid].centerX > windowWidth || boids[thisBoid].centerX < 0 || boids[thisBoid].centerY > windowHeight || boids[thisBoid].centerY < 0) {
-    // if (boids[thisBoid].centerX > windowWidth / 2 || boids[thisBoid].centerX < windowWidth / 2 || boids[thisBoid].centerY > windowHeight / 2 || boids[thisBoid].centerY < windowHeight / 2 ) {
     if (boids[thisBoid].centerY > windowHeight || boids[thisBoid].centerY < 0) {
         vec2 mapCenter = vec2(windowWidth / 2, windowHeight / 2);
         int resultInDegrees = mappedDegrees(int(atan(mapCenter.y - boids[thisBoid].centerY, mapCenter.x - boids[thisBoid].centerX) * 180 / PI));
@@ -147,9 +150,7 @@ bool raycast(vec2 directionVec, int thisBoid)
     const float offset = 500;
     vec4 walls[size];
     walls[0] = vec4(0 - offset, 0, windowWidth + offset, 0);
-    // walls[1] = vec4(windowWidth, 0 - offset, windowWidth, windowHeight + offset);
     walls[2] = vec4(windowWidth + offset, windowHeight, 0 - offset, windowHeight);
-    // walls[3] = vec4(0, windowHeight + offset, 0, 0 - offset);
 
     float raycastAngle = 2.0f;
     vec2 center = vec2(boids[thisBoid].centerX, boids[thisBoid].centerY);
