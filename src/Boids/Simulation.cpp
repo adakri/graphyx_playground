@@ -3,6 +3,10 @@
 // Global state pause 
 bool paused = false; 
 
+/**
+ * @brief Construct a new Simulation:: Simulation object
+ * 
+ */
 Simulation::Simulation()
 {
     std::cout<<"Initializing simulation..."<<std::endl;
@@ -12,8 +16,7 @@ Simulation::Simulation()
 
     // Frame rate and misc
     srand(static_cast<unsigned int>(time(NULL)));
-    // Enforce framerate limit
-    _framerate = 60;
+    // Running state
     _running = true;
 
     _lastTime = 0.;
@@ -23,16 +26,21 @@ Simulation::Simulation()
     for (int i = 0; i < BOIDS_COUNT; i++) {
         int x = static_cast<int>(WALLOFFSET + rand() % static_cast<int>(SCR_WIDTH - WALLOFFSET * 2));
         int y = static_cast<int>(WALLOFFSET + rand() % static_cast<int>(SCR_HEIGHT - WALLOFFSET * 2));
-        _boids[i] = Boid(glm::vec2{x, y}, static_cast<float>(SCR_WIDTH), 3);
+        _boids[i] = Boid(glm::vec2{x, y}, static_cast<float>(SCR_WIDTH), 5);
     }
-
+    // Spatial hashing for boids neighborhood acceleration
+    // The idea is to create a 2D voxel grid and a hash table for neighbour search
+    //https://stackoverflow.com/questions/8867825/2d-spatial-data-structure-suitable-for-flocking-boids-in-java
     _tableSize = BUCKETS_COUNT * 2;
+    // Meta data are screen parameters and boids count 
     _metadataSize = 4;
+    // Transformations
     _worldPosScaleAngleDegOffset = 6;
     _worldPosScaleAngleDegSize = BOIDS_COUNT * _worldPosScaleAngleDegOffset;
     _worldPosScaleAngleDegIdx1 = _tableSize + _metadataSize;
     _worldPosScaleAngleDegIdx2 = _tableSize + _metadataSize + _worldPosScaleAngleDegSize;
     _bufferSize = _tableSize + _metadataSize + _worldPosScaleAngleDegSize * 2;
+    // Shared buffer to be used in compute
     _sharedBuffer = new float[_bufferSize];
     std::memset(_sharedBuffer, 0, _bufferSize * sizeof(float));
     _sharedBuffer[_tableSize] = static_cast<float>(BOIDS_COUNT);
@@ -50,9 +58,11 @@ Simulation::Simulation()
             _sharedBuffer[inc + 5] = 0.0f; // hashKey
         }
     }
-    //printarr("%.2f \n", _sharedBuffer, 30);
 }
-
+/**
+ * @brief Destroy the Simulation:: Simulation object
+ * 
+ */
 Simulation::~Simulation()
 {
     delete[] _boids;
@@ -134,7 +144,9 @@ int Simulation::openGlInit()
         glfwTerminate();
         return -1;
     }
+    // Enable current context
     glfwMakeContextCurrent(_window);
+    //Register frame resize callback using function declared b4
     glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
@@ -152,15 +164,22 @@ int Simulation::openGlInit()
     std::cout<<"Frag shader..."<<std::endl;
     compileShader(&_fragmentShader, "boid.fs", GL_FRAGMENT_SHADER);
     _vertexFragProgram = glCreateProgram();
+    std::cout<<"Geom shader..."<<std::endl;
+    compileShader(&_geometryShader, "boid.gs", GL_GEOMETRY_SHADER);
+    _vertexFragProgram = glCreateProgram();
+    // Frag and vert shaders are attached to the same program
     glAttachShader(_vertexFragProgram, _vertexShader);
     glAttachShader(_vertexFragProgram, _fragmentShader);
+    glAttachShader(_vertexFragProgram, _geometryShader);
     glLinkProgram(_vertexFragProgram);
     checkShaderProgramCompileError(_vertexFragProgram);
     glDeleteShader(_vertexShader);
     glDeleteShader(_fragmentShader);
+    glDeleteShader(_geometryShader);
+    glDeleteShader(_computeShader);
 
     std::cout<<"Comp shader..."<<std::endl;
-    compileShader(&_computeShader, "boid.cs", GL_COMPUTE_SHADER);
+    compileShader(&_computeShader, "boid_physx.glsl", GL_COMPUTE_SHADER);
     _computeProgramFlocking = glCreateProgram();
     glAttachShader(_computeProgramFlocking, _computeShader);
     glLinkProgram(_computeProgramFlocking);
@@ -175,18 +194,31 @@ int Simulation::openGlInit()
     glDeleteShader(_computeShader);
 
     std::cout<<"Generating buffers..."<<std::endl;
+    //A vertex buffer object (VBO) is an OpenGL feature that provides methods for uploading vertex data (position, normal vector, color, etc.) 
+    // to the video device for non-immediate-mode rendering. VBOs offer substantial performance gains over immediate mode rendering primarily because the 
+    // data reside in video device memory rather than system memory and so it can be rendered directly by the video device. These are equivalent 
+    // to vertex buffers in Direct3D. 
     glGenBuffers(1, &_VBO);
+    // Storing the other vertex related data (transformations) in a uniform buffer.
     glGenBuffers(1, &_instanceVBO);
+    // A Shader Storage Buffer Object is a Buffer Object that is used to store and retrieve data from within the OpenGL Shading Language.
+    // SSBOs are a lot like Uniform Buffer Objects. Shader storage blocks are defined by Interface Block (GLSL)s in almost the same way as uniform blocks. 
+    // Buffer objects that store SSBOs are bound to SSBO binding points, just as buffer objects for uniforms are bound to UBO binding points. And so forth. 
     glGenBuffers(1, &_SSBO);
+    // If  VBO is an array of raw data, when VAO is an array of ATTRIBUTES - an instruction for shader program how to use the data.
     glGenVertexArrays(1, &_VAO);
 
     _projection = glm::mat4(1.0f);
     _projection = glm::ortho(0.0f, (float)SCR_WIDTH, (float)SCR_HEIGHT, 0.0f, -1.0f, 1.0f);
 }
 
-
+/**
+ * @brief Compute and run rasterization shaders.
+ * 
+ */
 void Simulation::display()
 {
+    // Update hashtable
     Boid::updateHashtable(_sharedBuffer, _tableSize, _sharedBuffer[_bufferSelectorIdx] == 1.0f ? &_sharedBuffer[_worldPosScaleAngleDegIdx1] : &_sharedBuffer[_worldPosScaleAngleDegIdx2], _worldPosScaleAngleDegOffset, &_sharedBuffer[_bufferSelectorIdx]);
     static int firstIt = 0;
     // Compute shader code
@@ -213,8 +245,6 @@ void Simulation::display()
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
     glUseProgram(0);
 
-    //printarr("%.2f -", _sharedBuffer, 30);
-
     // Generate color and draw framebuffer
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(_vertexFragProgram);
@@ -225,7 +255,10 @@ void Simulation::display()
     glUseProgram(0);
 
 }
-
+/**
+ * @brief Run sim.
+ * 
+ */
 void Simulation::run()
 {
     std::chrono::steady_clock::time_point lastTime = std::chrono::steady_clock::now();
@@ -235,12 +268,14 @@ void Simulation::run()
     {
         std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
         nbFrames++;
+        // Compute FPS
         if ((double)std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastTime).count() >= 1.0) 
         {
             std::cout << nbFrames << " fps" << std::endl;
             nbFrames = 0;
             lastTime = std::chrono::steady_clock::now();
         }
+        // Unless pause callback is signaled
         if(!paused)
             display();
         // GL params

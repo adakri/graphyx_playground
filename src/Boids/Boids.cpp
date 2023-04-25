@@ -7,16 +7,56 @@ int Boid::_nextID = 0;
 const unsigned int Boid::_vSize = 15;
 float Boid::_vertices[_vSize] = {
     // Positions   // Colors
-     0.0f,  1.0f,  0.5f, 0.8f, 1.0f,
-     1.0f, -1.0f,  0.5f, 0.8f, 1.0f,
-    -1.0f, -1.0f,  0.5f, 0.8f, 1.0f
+     0.0f,  1.0f,  0.9f, 0.1f, 0.0f,
+     1.0f, -1.0f,  0.9f, 0.1f, 0.0f,
+    -1.0f, -1.0f,  0.9f, 0.1f, 0.0f,
+    // 0.0f,  0.0f,  0.9f, 0.1f, 0.0f
 };
+/*
+Shape of boid
+        *
+       *  *
+      *    *
+     *      *
+    *        *
+   *    *     *
+  *  **   **   *
+ * *          * *
+
+*/
 float Boid::_screenWidth;
 int Boid::_cellWidth;
 int Boid::_gridWidth;
 
+/**
+ * @brief Prepare drawing buffers (binding ...)
+ * 
+ * @param VAO 
+ * @param VBO 
+ * @param instanceVBO 
+ * @param worldPosScaleAngleDeg 
+ */
 void Boid::prepareDrawingBuffers(unsigned int VAO, unsigned int VBO, unsigned int instanceVBO, float *worldPosScaleAngleDeg)
 {
+    /*
+    This relates to this
+    layout (location = 0) in vec2 aPos;
+    layout (location = 1) in vec3 aColor;
+    layout (location = 2) in vec4 aWorldPosAndScale;
+    layout (location = 3) in float angleDeg;
+    
+    Explanation of the other stuff:
+    
+    * glVertexAttribDivisor modifies the rate at which generic vertex attributes advance when rendering multiple instances of primitives in a single draw 
+    call. If divisor is zero, the attribute at slot index advances once per vertex. If divisor is non-zero, the attribute advances once per divisor instances
+     of the set(s) of vertices being rendered. An attribute is referred to as instanced if its GL_VERTEX_ATTRIB_ARRAY_DIVISOR value is non-zero.
+     see https://stackoverflow.com/questions/50650457/what-is-the-difference-between-glvertexattribdivisor-and-glvertexbindingdivisor
+    * glEnableVertexAttribArray corresponds to the layout attrib
+    * glVertexAttribPointer formats the VBO
+    
+    
+    */
+
     std::size_t floatSize = sizeof(float);
     std::size_t vec4Size = sizeof(glm::vec4);
     // Bind vertex buffer (positions(2)+colors(3))
@@ -25,19 +65,27 @@ void Boid::prepareDrawingBuffers(unsigned int VAO, unsigned int VBO, unsigned in
     glBindVertexArray(VAO);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, static_cast<GLsizei>(5 * floatSize), (void *)0);
     glEnableVertexAttribArray(0);
+
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, static_cast<GLsizei>(5 * floatSize), (void *)(2 * floatSize));
     glEnableVertexAttribArray(1);
+
     // Position angle and scale buffers
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
     glBufferData(GL_ARRAY_BUFFER, (vec4Size + floatSize * 2) * BOIDS_COUNT, worldPosScaleAngleDeg, GL_STREAM_DRAW);
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, static_cast<GLsizei>(vec4Size + floatSize * 2), (void*)0);
     glEnableVertexAttribArray(2);
     glVertexAttribDivisor(2, 1);
+
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, static_cast<GLsizei>(vec4Size + floatSize * 2), (void*)(4 * floatSize));
     glEnableVertexAttribArray(3);
     glVertexAttribDivisor(3, 1);
 }
 
+/**
+ * @brief CLear VAO
+ * 
+ * @param VAO 
+ */
 void Boid::clearDrawingBuffers(unsigned int VAO)
 {
     glBindVertexArray(0);
@@ -49,7 +97,10 @@ void Boid::clearDrawingBuffers(unsigned int VAO)
 
 // -------------------------------------- //
 
-
+/**
+ * @brief Construct a new Boid:: Boid object
+ * 
+ */
 Boid::Boid()
 {
 }

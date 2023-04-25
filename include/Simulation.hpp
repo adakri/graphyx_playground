@@ -43,7 +43,6 @@ class Simulation {
         void updateHashtable();
 
         GLFWwindow* _window;
-        int _framerate;
         bool _running;
         double _lastTime;
         double _currentTime;
@@ -73,6 +72,8 @@ class Simulation {
         unsigned int _vertexShader;
         unsigned int _computeShader;
         unsigned int _fragmentShader;
+        unsigned int _geometryShader;
+
         glm::mat4 _projection;
 };
 

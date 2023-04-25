@@ -1,5 +1,5 @@
 #version 460 core
-
+// Standard frag shader with transparency
 in vec3 fColor;
 
 out vec4 FragColor;
