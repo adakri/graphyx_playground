@@ -21,6 +21,7 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+void key_callback(GLFWwindow *window,int key,int scancode,int action,int mods);
 
 // settings
 const unsigned int SCR_WIDTH = 1600;

@@ -1,5 +1,8 @@
 #include "Simulation.hpp"
 
+// Global state pause 
+bool paused = false; 
+
 Simulation::Simulation()
 {
     std::cout<<"Initializing simulation..."<<std::endl;
@@ -238,7 +241,8 @@ void Simulation::run()
             nbFrames = 0;
             lastTime = std::chrono::steady_clock::now();
         }
-        display();
+        if(!paused)
+            display();
         // GL params
         _wireframe = false;
         glEnable(GL_BLEND);
@@ -249,6 +253,7 @@ void Simulation::run()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
+        glfwSetKeyCallback(_window, key_callback);
         glfwSwapBuffers(_window);
         glfwPollEvents();
     }
@@ -281,6 +286,22 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 // Pause resume callback
+void key_callback(GLFWwindow *window,int key,int scancode,int action,int mods)
+{
+    if (key==GLFW_KEY_ESCAPE)
+    {
+        glfwSetWindowShouldClose(window,GL_TRUE);
+    }
+    if(key==GLFW_KEY_P && action == GLFW_PRESS){
+        if(!paused){
+            std::cout<<"Pausing"<<std::endl;
+            paused = true;
+        }else{
+            std::cout<<"Resuming"<<std::endl;
+            paused = false;
+        }
+    }
+}
 
 
 
