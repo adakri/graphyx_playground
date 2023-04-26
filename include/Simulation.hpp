@@ -39,6 +39,7 @@ class Simulation {
     private:
         void events();
         void display();
+        void display_cuda();
         void update();
         void updateHashtable();
 

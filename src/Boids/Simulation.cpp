@@ -282,6 +282,20 @@ void Simulation::display()
     glUseProgram(0);
 
 }
+
+/**
+ * @brief Cuda kernels instead of compute shaders
+ * 
+ */
+void Simulation::display_cuda()
+{
+    int BlockSize(32), GridSize((int)ceil(BOIDS_COUNT/BlockSize));
+    
+
+}
+
+
+
 /**
  * @brief Run sim.
  * 

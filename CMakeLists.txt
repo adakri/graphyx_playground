@@ -1,6 +1,12 @@
-cmake_minimum_required(VERSION 3.10.0)
+# Cmake minimum version
+cmake_minimum_required(VERSION 3.21)
 
-project(graphyx_playground)
+# Set cmake cuda (if it does not exist)
+set(CMAKE_CUDA_COMPILER "/usr/local/cuda-12.1/bin/")
+set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-12.1")
+
+
+project(graphyx_playground LANGUAGES CXX C CUDA)
 
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
@@ -27,6 +33,7 @@ file(GLOB SRCS
     "src/*.cpp"
     "src/Boids/*.cpp"
     "src/utils/*.cpp"
+    "kernels/*.cu"
 )
 
 # Add imgui files
@@ -40,11 +47,14 @@ file(GLOB SRCS
 
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+
 find_package(OpenGL REQUIRED)
+#find_package(CUDA REQUIRED)
 add_definitions(${OPENGL_DEFINITIONS})
 find_package(X11 REQUIRED)
 find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
+
 # note that the order is important for setting the libs
 # use pkg-config --libs $(pkg-config --print-requires --print-requires-private glfw3) in a terminal to confirm
 set(LIBS glfw X11 Xrandr Xinerama Xi Xxf86vm Xcursor GL dl pthread freetype ${ASSIMP_LIBRARY})
@@ -58,5 +68,8 @@ message((${LIBS}))
 add_executable(graphyx_playground ${SRCS})
 target_link_libraries(graphyx_playground ${LIBS})
 
-include_directories(${CMAKE_SOURCE_DIR}/external ${CMAKE_SOURCE_DIR}/include())
+# CUDA 12.x has dropped support for Kepler compute 3.x devices.
+set_target_properties(graphyx_playground PROPERTIES CUDA_ARCHITECTURES "61;72")
+
+include_directories(${CMAKE_SOURCE_DIR}/external ${CMAKE_SOURCE_DIR}/include )
 
