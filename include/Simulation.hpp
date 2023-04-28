@@ -2,6 +2,7 @@
 #define Simulation_HPP_
 
 #include "Boids.hpp"
+#include "kernels.hpp"
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 

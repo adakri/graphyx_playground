@@ -1,5 +1,7 @@
 # graphyxPlayground
 
+**(This project is still not fully pushed, still a few things to sort out)**.
+
 This project is my very simplistic way of documenting a simple tutorial for graphics programming covering the OpenGL graphics pipeline as well as the compute capabilities using OpenGL as well as CUDA. 
 
 ## Story Time
@@ -8,6 +10,16 @@ When starting a long time ago (a couple of years ago) to explore OpenGL and grap
 
 # Acknowledgements
 In addition to the two other personal projects I have mentionned, I have extensively used the internet (for the greater good I hope) and you will find a lot of stackoverflow links that docuent the code, otherwise I have to mention these [two]((https://github.com/sarckk/boids)) [projects](https://github.com/L0rentz/Boids-2D) from which I have delibratly taken and heavily adapted a bunch of stuff.  
+
+# The ideas I experimented with and documented
+
+(The specifics are TBD).
+
+* Conventional rendering pipeline for multi body simulation (and triangle rasterization ingeneral in OpenGL).
+* UI integration with DearImGUI (*TBD*).
+* GPU compute using compute shaders.
+* Geometry shaders.
+* GPU compute with CUDA and OpenGL interop (TBD).
 
 
 # SetUp
@@ -18,3 +30,5 @@ Since this projects attempts to set up a full framework for interactive simulati
 TODO
 
 # Results
+
+<img src="./imgs/sim.gif" width="640" height="480"/>

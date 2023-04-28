@@ -291,6 +291,8 @@ void Simulation::display_cuda()
 {
     // https://stackoverflow.com/questions/6481123/cuda-and-opengl-interop
     int BlockSize(32), GridSize((int)ceil(BOIDS_COUNT/BlockSize));
+    // Launch hashing table update
+    
     
 
 }
