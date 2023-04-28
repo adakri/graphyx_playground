@@ -1,32 +1,10 @@
-// Hashing grid
-#define BUCKETS_COUNT 400
-
-struct s_hash {
-    float size;
-    float startIdx;
-};
-
-struct s_boid {
-    float centerX;
-    float centerY;
-    float scaleX;
-    float scaleY;
-    float angleDeg;
-    float hashKey;
-};
+#include "kernels.hpp"
 
 template <typename T>
 __global__
-void hash(T* sharedBufferBoids)
+void hash(T* sharedBufferBoids_)
 {
-    struct sharedBufferBoids {
-        s_hash htable[BUCKETS_COUNT];
-        float boidsCount;
-        float windowWidth;
-        float windowHeight;
-        float bufferSelector;
-        s_boid boids[];
-    };
+    Container  sharedBufferBoids = sharedBufferBoids_;
     // 1D blocks and thread organisation
     int blockidx = blockIdx.x;
     int threadidx = threadIdx.x;
@@ -34,10 +12,10 @@ void hash(T* sharedBufferBoids)
     
     if (element_id >= BUCKETS_COUNT) return;
 
-    int oldBoidsBuffer = bufferSelector == 2.0f ? 0 : int(boidsCount);
-    int newBoidsBuffer = bufferSelector == 2.0f ? int(boidsCount) : 0;
+    int oldBoidsBuffer = sharedBufferBoids.bufferSelector == 2.0f ? 0 : int(sharedBufferBoids.boidsCount);
+    int newBoidsBuffer = sharedBufferBoids.bufferSelector == 2.0f ? int(sharedBufferBoids.boidsCount) : 0;
 
-    for (int i = 0, sortIdx = int(htable[element_id].startIdx); i < boidsCount; i++, oldBoidsBuffer++) {
+    for (int i = 0, sortIdx = int(htable[element_id].startIdx); i < sharedBufferBoids.boidsCount; i++, oldBoidsBuffer++) {
         if (boids[oldBoidsBuffer].hashKey == element_id) {
             boids[newBoidsBuffer + sortIdx] = boids[oldBoidsBuffer];
             sortIdx++;
